@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
 import Confetti from 'react-confetti'
+import AddPatientModal from '@/components/AddPatientModal'
+import { exportPatientData } from '@/components/ExportReport'
 import { 
   LineChart, 
   Line, 
@@ -16,15 +18,14 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
-  BarChart,
-  Bar
+  Cell
 } from 'recharts'
 
 interface Patient {
   id: string
   full_name: string
   email: string
+  phone: string
   seizure_count: number
   last_seizure: string
   alert_level: 'red' | 'yellow' | 'green'
@@ -51,8 +52,11 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showConfetti, setShowConfetti] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [notifications, setNotifications] = useState<{ id: string; message: string; type: string }[]>([])
   const [recentActivity, setRecentActivity] = useState<Activity[]>([])
+  const [showAddPatient, setShowAddPatient] = useState(false)
+  const [showNotesModal, setShowNotesModal] = useState(false)
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [patientNotes, setPatientNotes] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -61,7 +65,6 @@ export default function DashboardPage() {
     loadSeizureTrend()
     loadRecentActivity()
     
-    // Update time every second
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
@@ -216,7 +219,7 @@ export default function DashboardPage() {
 
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, phone')
         .in('id', patientIds)
 
       const patientsWithData = await Promise.all(
@@ -244,6 +247,7 @@ export default function DashboardPage() {
             id: profile.id,
             full_name: profile.full_name || 'Unknown',
             email: profile.email,
+            phone: profile.phone || 'Not provided',
             seizure_count: seizureCount,
             last_seizure: lastSeizure,
             alert_level: alertLevel,
@@ -290,6 +294,35 @@ export default function DashboardPage() {
     { name: 'Stable', value: greenCount, color: '#22C55E', icon: '🟢' },
   ]
 
+  async function handleExportAll() {
+    try {
+      toast.loading('Generating report...', { id: 'export' })
+      
+      const headers = ['Patient Name', 'Email', 'Phone', 'Weekly Seizures', 'Last Seizure', 'Alert Level']
+      const rows = patients.map(p => [
+        p.full_name,
+        p.email,
+        p.phone,
+        p.seizure_count,
+        p.last_seizure,
+        p.alert_level.toUpperCase()
+      ])
+
+      const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `all_patients_report_${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      
+      toast.success('Report downloaded!', { id: 'export' })
+    } catch (error) {
+      toast.error('Failed to generate report', { id: 'export' })
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
@@ -310,6 +343,15 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900">
       {showConfetti && <Confetti recycle={false} numberOfPieces={200} />}
       <Toaster position="top-right" />
+      
+      <AddPatientModal
+        isOpen={showAddPatient}
+        onClose={() => setShowAddPatient(false)}
+        onPatientAdded={() => {
+          loadPatients()
+          loadRecentActivity()
+        }}
+      />
       
       {/* Animated Header */}
       <motion.header 
@@ -356,20 +398,42 @@ export default function DashboardPage() {
       </motion.header>
 
       <main className="container mx-auto px-6 py-8">
-        {/* Welcome Section with Time */}
+        {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-2">
-            Good {currentTime.getHours() < 12 ? 'Morning' : currentTime.getHours() < 18 ? 'Afternoon' : 'Evening'}
-          </h2>
-          <p className="text-slate-400">{currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-2">
+                Good {currentTime.getHours() < 12 ? 'Morning' : currentTime.getHours() < 18 ? 'Afternoon' : 'Evening'}
+              </h2>
+              <p className="text-slate-400">{currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+            <div className="flex gap-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExportAll}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-purple-500/20 transition-all duration-300"
+              >
+                📊 Export All
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowAddPatient(true)}
+                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-green-500/20 transition-all duration-300"
+              >
+                + Add Patient
+              </motion.button>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Stats Cards with Pulse Animation for Alerts */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
             { label: 'Total Patients', value: patients.length, icon: '👥', color: 'from-blue-500 to-purple-500', delay: 0.1, pulse: false },
@@ -592,37 +656,40 @@ export default function DashboardPage() {
                               {styles.dot} {patient.alert_level.toUpperCase()}
                             </motion.span>
                           </div>
-                          <p className="text-slate-400 text-sm mb-3">{patient.email}</p>
+                          <p className="text-slate-400 text-sm mb-2">{patient.email}</p>
+                          <p className="text-slate-500 text-xs mb-3">📞 {patient.phone}</p>
                           <div className="flex gap-6">
                             <div>
                               <p className="text-slate-500 text-xs">Last Seizure</p>
-                              <motion.p 
-                                whileHover={{ scale: 1.05 }}
-                                className="text-white text-sm font-medium"
-                              >
-                                {patient.last_seizure}
-                              </motion.p>
+                              <p className="text-white text-sm font-medium">{patient.last_seizure}</p>
                             </div>
                             <div>
                               <p className="text-slate-500 text-xs">Weekly Seizures</p>
-                              <motion.p 
-                                animate={{ 
-                                  scale: patient.seizure_count > 0 ? [1, 1.2, 1] : 1
-                                }}
-                                transition={{ duration: 0.5, repeat: patient.seizure_count > 0 ? 2 : 0 }}
-                                className={`text-white text-sm font-medium ${patient.seizure_count > 0 ? 'text-yellow-400' : ''}`}
-                              >
+                              <p className={`text-white text-sm font-medium ${patient.seizure_count > 0 ? 'text-yellow-400' : ''}`}>
                                 {patient.seizure_count}
-                              </motion.p>
+                              </p>
                             </div>
                           </div>
                         </div>
-                        <motion.div 
-                          whileHover={{ x: 10 }}
-                          className="text-slate-400"
-                        >
-                          →
-                        </motion.div>
+                        <div className="flex flex-col items-end gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              exportPatientData(patient.id, patient.full_name)
+                            }}
+                            className="text-slate-400 hover:text-blue-400 transition text-sm"
+                          >
+                            📊 Export
+                          </motion.button>
+                          <motion.div 
+                            whileHover={{ x: 10 }}
+                            className="text-slate-400"
+                          >
+                            →
+                          </motion.div>
+                        </div>
                       </div>
                     </motion.div>
                   )
@@ -640,8 +707,8 @@ export default function DashboardPage() {
           className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {[
-            { name: 'Add Patient', icon: '➕', color: 'from-blue-500 to-blue-600', action: () => toast.success('Add patient feature coming soon!') },
-            { name: 'Generate Report', icon: '📋', color: 'from-purple-500 to-purple-600', action: () => toast.success('Report generation coming soon!') },
+            { name: 'Add Patient', icon: '➕', color: 'from-blue-500 to-blue-600', action: () => setShowAddPatient(true) },
+            { name: 'Export All', icon: '📊', color: 'from-purple-500 to-purple-600', action: () => handleExportAll() },
             { name: 'Message All', icon: '💬', color: 'from-green-500 to-green-600', action: () => toast.success('Messaging feature coming soon!') },
             { name: 'Settings', icon: '⚙️', color: 'from-orange-500 to-orange-600', action: () => toast.success('Settings coming soon!') },
           ].map((action, idx) => (
