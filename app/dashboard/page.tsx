@@ -54,9 +54,6 @@ export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [recentActivity, setRecentActivity] = useState<Activity[]>([])
   const [showAddPatient, setShowAddPatient] = useState(false)
-  const [showNotesModal, setShowNotesModal] = useState(false)
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [patientNotes, setPatientNotes] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -709,8 +706,8 @@ export default function DashboardPage() {
           {[
             { name: 'Add Patient', icon: '➕', color: 'from-blue-500 to-blue-600', action: () => setShowAddPatient(true) },
             { name: 'Export All', icon: '📊', color: 'from-purple-500 to-purple-600', action: () => handleExportAll() },
-            { name: 'Message All', icon: '💬', color: 'from-green-500 to-green-600', action: () => toast.success('Messaging feature coming soon!') },
-            { name: 'Settings', icon: '⚙️', color: 'from-orange-500 to-orange-600', action: () => toast.success('Settings coming soon!') },
+            { name: 'Message All', icon: '💬', color: 'from-green-500 to-green-600', action: () => toast.success('Bulk messaging feature coming soon!') },
+            { name: 'Settings', icon: '⚙️', color: 'from-orange-500 to-orange-600', action: () => toast.success('Settings panel coming soon!') },
           ].map((action, idx) => (
             <motion.button
               key={action.name}
