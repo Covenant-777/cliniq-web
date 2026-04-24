@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -40,39 +41,56 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900 flex items-center justify-center relative overflow-hidden">
-      {/* Animated Background Elements */}
+      {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse delay-2000"></div>
-        
-        {/* Floating particles */}
-        <div className="absolute top-20 left-10 w-2 h-2 bg-blue-400 rounded-full animate-float"></div>
-        <div className="absolute top-40 right-20 w-3 h-3 bg-purple-400 rounded-full animate-float delay-500"></div>
-        <div className="absolute bottom-30 left-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-float delay-1000"></div>
-        <div className="absolute bottom-40 right-1/3 w-3 h-3 bg-blue-400 rounded-full animate-float delay-1500"></div>
       </div>
 
-      {/* Glass Card */}
-      <div className="relative w-full max-w-md mx-4">
-        {/* Decorative glow behind card */}
+      {/* Floating Particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white/20 rounded-full animate-float"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${3 + Math.random() * 4}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Main Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative w-full max-w-md mx-4"
+      >
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-30"></div>
         
-        {/* Main Card */}
         <div className="relative backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 p-8 shadow-2xl">
-          {/* Logo Section */}
-          <div className="text-center mb-8">
+          {/* Logo */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring' }}
+            className="text-center mb-8"
+          >
             <div className="relative inline-block">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg animate-pulse">
+              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
                 <span className="text-4xl">🏥</span>
               </div>
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition"></div>
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent mt-4 animate-gradient">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent mt-4 bg-300% animate-gradient">
               ClinIQ
             </h1>
             <p className="text-slate-400 mt-2">Doctor Dashboard</p>
-          </div>
+          </motion.div>
 
           {/* Toggle Buttons */}
           <div className="flex gap-2 p-1 bg-white/5 rounded-xl mb-6">
@@ -99,10 +117,9 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Input */}
-            <div className="group">
+            <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
               <label className="block text-slate-400 text-sm mb-2">Email Address</label>
-              <div className="relative">
+              <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-slate-500 group-focus-within:text-blue-400 transition-colors">📧</span>
                 </div>
@@ -110,17 +127,16 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
                   placeholder="doctor@cliniq.com"
                   required
                 />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Password Input */}
-            <div className="group">
+            <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
               <label className="block text-slate-400 text-sm mb-2">Password</label>
-              <div className="relative">
+              <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-slate-500 group-focus-within:text-blue-400 transition-colors">🔒</span>
                 </div>
@@ -128,26 +144,34 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
                   placeholder="••••••••"
                   required
                 />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Error/Success Message */}
-            {error && (
-              <div className={`p-3 rounded-lg text-sm ${
-                error.includes('created') 
-                  ? 'bg-green-500/20 border border-green-500/50 text-green-400' 
-                  : 'bg-red-500/20 border border-red-500/50 text-red-400'
-              }`}>
-                {error}
-              </div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`p-3 rounded-lg text-sm ${
+                    error.includes('created') 
+                      ? 'bg-green-500/20 border border-green-500/50 text-green-400' 
+                      : 'bg-red-500/20 border border-red-500/50 text-red-400'
+                  }`}
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Submit Button */}
-            <button
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
               type="submit"
               disabled={loading}
               className="relative w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-semibold text-white overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50"
@@ -166,11 +190,16 @@ export default function LoginPage() {
                   </>
                 )}
               </span>
-            </button>
+            </motion.button>
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10"
+          >
             <p className="text-slate-400 text-xs text-center mb-2">Demo Credentials</p>
             <div className="flex justify-center gap-4 text-sm">
               <div>
@@ -182,36 +211,24 @@ export default function LoginPage() {
                 <p className="text-white font-mono text-xs">doctor123</p>
               </div>
             </div>
-          </div>
-
-          {/* Footer */}
-          <p className="text-center text-slate-500 text-xs mt-6">
-            Secure medical dashboard • HIPAA compliant
-          </p>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       <style jsx>{`
         @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          25% { transform: translateY(-10px) translateX(5px); }
+          75% { transform: translateY(10px) translateX(-5px); }
         }
         
         @keyframes gradient {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         
         .animate-float {
-          animation: float 4s ease-in-out infinite;
+          animation: float linear infinite;
         }
         
         .animate-gradient {
@@ -219,21 +236,8 @@ export default function LoginPage() {
           animation: gradient 3s ease infinite;
         }
         
-        .delay-500 {
-          animation-delay: 0.5s;
-        }
-        
-        .delay-1000 {
-          animation-delay: 1s;
-        }
-        
-        .delay-1500 {
-          animation-delay: 1.5s;
-        }
-        
-        .delay-2000 {
-          animation-delay: 2s;
-        }
+        .delay-1000 { animation-delay: 1s; }
+        .delay-2000 { animation-delay: 2s; }
       `}</style>
     </div>
   )
